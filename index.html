@@ -466,13 +466,11 @@
         cardScene.addEventListener('click', (e) => {
             // Don't flip if clicking a link on the back
             if (flipped && e.target.closest('a')) return;
+            card.style.transform = '';
             flipped = !flipped;
             card.classList.toggle('flipped');
             hint.classList.add('hidden');
             tiltEnabled = !flipped;
-            if (!flipped) {
-                card.style.transform = '';
-            }
         });
 
         // 3D tilt on mousemove (front only)
