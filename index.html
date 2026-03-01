@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruben Hassid</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== AMBIENT SCENE (like the restaurant in the movie) ===== */
+        .scene-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(180, 140, 80, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(180, 140, 80, 0.02) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 0%, rgba(200, 170, 110, 0.04) 0%, transparent 50%),
+                #0a0a0a;
+        }
+
+        /* Subtle light flicker like candlelight */
+        .ambient-light {
+            position: fixed;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .ambient-light.l1 {
+            background: radial-gradient(circle, rgba(200, 160, 80, 0.08), transparent 70%);
+            top: 30%; left: 40%;
+            animation: candleFlicker 4s ease-in-out infinite;
+        }
+        .ambient-light.l2 {
+            background: radial-gradient(circle, rgba(180, 140, 60, 0.05), transparent 70%);
+            top: 50%; right: 20%;
+            animation: candleFlicker 5s ease-in-out infinite 1s;
+        }
+        @keyframes candleFlicker {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            30% { opacity: 0.5; transform: scale(1.02); }
+            60% { opacity: 0.35; transform: scale(0.98); }
+        }
+
+        /* ===== CARD CONTAINER ===== */
+        .card-scene {
+            perspective: 1200px;
+            width: 420px;
+            height: 250px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* ===== FRONT OF CARD ===== */
+        .card-front {
+            background: linear-gradient(145deg, #f5f0e8, #ede6d6, #f2ece2);
+            box-shadow:
+                0 1px 3px rgba(0,0,0,0.3),
+                0 8px 30px rgba(0,0,0,0.4),
+                0 30px 60px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* Subtle paper texture */
+        .card-front::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.005) 2px,
+                    rgba(0,0,0,0.005) 4px
+                );
+            pointer-events: none;
+        }
+
+        /* Embossed edge effect */
+        .card-front::after {
+            content: '';
+            position: absolute;
+            top: 12px; left: 12px; right: 12px; bottom: 12px;
+            border: 0.5px solid rgba(180, 160, 120, 0.15);
+            pointer-events: none;
+        }
+
+        .front-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            font-size: 1.65rem;
+            color: #2a2520;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            position: relative;
+            text-align: center;
+        }
+
+        .front-line {
+            width: 60px;
+            height: 0.5px;
+            background: linear-gradient(90deg, transparent, #b8a070, transparent);
+            margin: 16px 0;
+        }
+
+        .front-title {
+            font-family: 'Lora', serif;
+            font-weight: 400;
+            font-style: italic;
+            font-size: 0.7rem;
+            color: #8a7d6b;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Watermark-like subtle text */
+        .front-watermark {
+            position: absolute;
+            bottom: 18px;
+            right: 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.5rem;
+            color: rgba(160, 140, 110, 0.25);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        /* ===== BACK OF CARD ===== */
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(165deg, #f5f0e8, #ede6d6, #e8e0d0);
+            box-shadow:
+                0 1px 3px rgba(0,0,0,0.3),
+                0 8px 30px rgba(0,0,0,0.4),
+                0 30px 60px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.5);
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-back::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.005) 2px,
+                    rgba(0,0,0,0.005) 4px
+                );
+            pointer-events: none;
+        }
+
+        .card-back::after {
+            content: '';
+            position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 0.5px solid rgba(180, 160, 120, 0.12);
+            pointer-events: none;
+        }
+
+        .back-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .back-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 500;
+            font-size: 1rem;
+            color: #2a2520;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+        }
+
+        .back-role {
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-size: 0.55rem;
+            color: #9a8d7a;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+
+        .back-status {
+            text-align: right;
+        }
+        .back-status-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 0.55rem;
+            color: #6b5d4d;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .back-status-name {
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-size: 0.65rem;
+            color: #2a2520;
+            letter-spacing: 1px;
+            margin-top: 1px;
+        }
+
+        .back-divider {
+            width: 100%;
+            height: 0.5px;
+            background: linear-gradient(90deg, rgba(180,160,120,0.3), rgba(180,160,120,0.1));
+            margin: 0;
+        }
+
+        .back-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        a.detail-item:hover { opacity: 0.6; }
+
+        .detail-icon {
+            font-size: 0.55rem;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
+            color: #a0906e;
+        }
+        .detail-icon svg {
+            width: 11px;
+            height: 11px;
+            fill: #a0906e;
+        }
+
+        .detail-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.52rem;
+            color: #5a5045;
+            letter-spacing: 0.5px;
+        }
+
+        .back-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .back-tagline {
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-size: 0.5rem;
+            color: rgba(100, 85, 65, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .back-extras {
+            text-align: right;
+        }
+
+        .back-extra-item {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.45rem;
+            color: rgba(90, 80, 65, 0.5);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* ===== HINT TEXT ===== */
+        .hint {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.65rem;
+            color: rgba(200, 180, 140, 0.2);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transition: opacity 0.8s ease;
+            z-index: 1;
+        }
+        .hint.hidden { opacity: 0; }
+
+        /* ===== CARD ENTRANCE ===== */
+        .card-scene {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+        }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== HOVER TILT ===== */
+        .card-scene:hover .card:not(.flipped) {
+            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+        }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 480px) {
+            .card-scene {
+                width: 340px;
+                height: 205px;
+            }
+            .card-front { padding: 30px; }
+            .front-name { font-size: 1.3rem; letter-spacing: 4px; }
+            .front-title { font-size: 0.6rem; }
+            .card-back { padding: 22px 24px; }
+            .back-name { font-size: 0.85rem; }
+            .detail-text { font-size: 0.48rem; }
+            .back-details { gap: 3px 14px; }
+        }
+
+        @media (max-width: 360px) {
+            .card-scene {
+                width: 300px;
+                height: 185px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scene-bg"></div>
+    <div class="ambient-light l1"></div>
+    <div class="ambient-light l2"></div>
+
+    <div class="card-scene" id="cardScene">
+        <div class="card" id="card">
+            <!-- FRONT -->
+            <div class="card-face card-front">
+                <div class="front-name">Ruben Hassid</div>
+                <div class="front-line"></div>
+                <div class="front-title">Founder &nbsp;&bull;&nbsp; Advisor &nbsp;&bull;&nbsp; Strategist</div>
+                <div class="front-watermark">Est. MCMXCV</div>
+            </div>
+
+            <!-- BACK -->
+            <div class="card-face card-back">
+                <div class="back-header">
+                    <div>
+                        <div class="back-name">Ruben Hassid</div>
+                        <div class="back-role">How to AI &nbsp;&&nbsp; GPC Consulting</div>
+                    </div>
+                    <div class="back-status">
+                        <div class="back-status-label">Taken by</div>
+                        <div class="back-status-name">Michal</div>
+                    </div>
+                </div>
+
+                <div class="back-divider"></div>
+
+                <div class="back-details">
+                    <a class="detail-item" href="mailto:me@rubenhassid.ai">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
+                        <span class="detail-text">me@rubenhassid.ai</span>
+                    </a>
+                    <a class="detail-item" href="https://rubenhassid.ai/consulting" target="_blank">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+                        <span class="detail-text">rubenhassid.ai/consulting</span>
+                    </a>
+                    <a class="detail-item" href="https://www.linkedin.com/in/ruben-hassid/" target="_blank">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg></span>
+                        <span class="detail-text">LinkedIn</span>
+                    </a>
+                    <a class="detail-item" href="https://x.com/RubenHassid" target="_blank">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                        <span class="detail-text">@RubenHassid</span>
+                    </a>
+                    <a class="detail-item" href="https://substack.com/@ruben" target="_blank">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg></span>
+                        <span class="detail-text">Substack</span>
+                    </a>
+                    <a class="detail-item" href="https://wa.me/33669768665" target="_blank">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.637-1.467A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.168 0-4.19-.588-5.932-1.614l-.424-.254-2.75.87.885-2.688-.278-.442A9.776 9.776 0 012.182 12c0-5.422 4.396-9.818 9.818-9.818S21.818 6.578 21.818 12s-4.396 9.818-9.818 9.818z"/></svg></span>
+                        <span class="detail-text">+33 6 69 76 86 65</span>
+                    </a>
+                    <div class="detail-item">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span>
+                        <span class="detail-text">054-5050-749</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon"><svg viewBox="0 0 24 24"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg></span>
+                        <span class="detail-text">Muay Thai &nbsp;&bull;&nbsp; Every day</span>
+                    </div>
+                </div>
+
+                <div class="back-footer">
+                    <div class="back-tagline">She's with me.</div>
+                    <div class="back-extras">
+                        <div class="back-extra-item">Have a nice day.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hint" id="hint">Touch the card</div>
+
+    <script>
+        const cardScene = document.getElementById('cardScene');
+        const card = document.getElementById('card');
+        const hint = document.getElementById('hint');
+        let flipped = false;
+        let tiltEnabled = true;
+
+        // Click to flip
+        cardScene.addEventListener('click', (e) => {
+            // Don't flip if clicking a link on the back
+            if (flipped && e.target.closest('a')) return;
+            flipped = !flipped;
+            card.classList.toggle('flipped');
+            hint.classList.add('hidden');
+            tiltEnabled = !flipped;
+            if (!flipped) {
+                card.style.transform = '';
+            }
+        });
+
+        // 3D tilt on mousemove (front only)
+        cardScene.addEventListener('mousemove', (e) => {
+            if (!tiltEnabled) return;
+            const rect = cardScene.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -8;
+            const rotateY = ((x - centerX) / centerX) * 8;
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        cardScene.addEventListener('mouseleave', () => {
+            if (!tiltEnabled) return;
+            card.style.transform = '';
+        });
+
+        // Touch support for tilt
+        cardScene.addEventListener('touchmove', (e) => {
+            if (!tiltEnabled) return;
+            const rect = cardScene.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+    </script>
+</body>
+</html>
